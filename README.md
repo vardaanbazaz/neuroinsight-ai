@@ -133,15 +133,12 @@ Multiple machine learning classifiers were evaluated to compare baseline perform
 
 ### Model Performance Summary
 
-| Model | Classification Accuracy | Class 0 Precision | Class 0 Recall | Class 1 Precision | Class 1 Recall |
+| Model | Accuracy | Precision | Recall | F1 Score | AUC Score |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **XGBoost** | **86.44%** | **0.86** | **0.78** | **0.87** | **0.90** |
-| **Random Forest** (Baseline) | **91.52%** | 0.85 | 0.92 | 0.96 | 0.93 |
-| **Decision Tree** (Baseline) | **89.83%** | 0.82 | 0.88 | 0.93 | 0.88 |
-| **Random Forest** (Tuned) | **85.00%** | 0.75 | 0.75 | 0.89 | 0.89 |
-| **Decision Tree** (Tuned) | **82.00%** | 0.78 | 0.58 | 0.83 | 0.93 |
-| **SVM** (Tuned) | **82.00%** | 0.78 | 0.58 | 0.83 | 0.93 |
-| **K-Nearest Neighbors** | **79.00%** | 0.75 | 0.50 | 0.81 | 0.93 |
+| **XGBoost** | **0.966** | **0.976** | **0.976** | **0.976** | **0.958** |
+| **Random Forest** | 0.932 | 0.975 | 0.928 | 0.951 | 0.934 |
+| **Decision Tree** | 0.898 | 0.95 | 0.904 | 0.926 | 0.893 |
+| **SVM** | 0.830 | 0.900 | 0.850 | 0.870 | 0.810 |
 
 ### Performance Visualization & Evaluation Plots
 
