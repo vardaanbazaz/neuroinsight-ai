@@ -143,6 +143,18 @@ Multiple machine learning classifiers were evaluated to compare baseline perform
 | **SVM** (Tuned) | **82.00%** | 0.78 | 0.58 | 0.83 | 0.93 |
 | **K-Nearest Neighbors** | **79.00%** | 0.75 | 0.50 | 0.81 | 0.93 |
 
+### Performance Visualization & Evaluation Plots
+
+To empirically validate and compare these classification results, performance metrics and prediction estimators are visualized below:
+
+<div align="center">
+  <img src="https://github.com/bhanmrinal/Predictive-Analysis-for-Parkinsons-Disease-using-ML/assets/97622240/037b3989-51b8-46d7-b163-6ea5af7ed9cd" alt="Metric Scores for ML Models" width="70%" />
+  <p><em>Figure 3: Metric comparisons across different ML architectures.</em></p>
+
+  <img src="https://github.com/bhanmrinal/Predictive-Analysis-for-Parkinsons-Disease-using-ML/assets/97622240/a114921b-c139-4809-a5e8-d2b7b9815b56" alt="ROC and Precision-Recall Curves" width="70%" />
+  <p><em>Figure 4: True Positive vs. False Positive estimations (ROC and PR Curves).</em></p>
+</div>
+
 The decision tree structural layout is visualized under `assets/decision_tree.png` to examine splits on features such as `PPE` and the fPI components, showcasing feature splits that drive classification decisions.
 
 ---
