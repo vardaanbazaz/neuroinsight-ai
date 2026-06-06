@@ -131,15 +131,6 @@ By combining scaling exponents, chaotic dynamics, and pitch variation into a sin
 
 Multiple machine learning classifiers were evaluated to compare baseline performance against the final gradient boosted trees model.
 
-### Model Performance Summary
-
-| Model | Accuracy | Precision | Recall | F1 Score | AUC Score |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **XGBoost** | **0.966** | **0.976** | **0.976** | **0.976** | **0.958** |
-| **Random Forest** | 0.932 | 0.975 | 0.928 | 0.951 | 0.934 |
-| **Decision Tree** | 0.898 | 0.95 | 0.904 | 0.926 | 0.893 |
-| **SVM** | 0.830 | 0.900 | 0.850 | 0.870 | 0.810 |
-
 ### Performance Visualization & Evaluation Plots
 
 To empirically validate and compare these classification results, performance metrics and prediction estimators are visualized below:
