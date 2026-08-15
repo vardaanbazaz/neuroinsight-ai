@@ -13,7 +13,7 @@
 
 ## 1. HERO SECTION
 
-**neuroinsight-ai** is an applied machine learning research project exploring the non-invasive prediction of Parkinson's Disease using vocal acoustic biomarkers. By utilizing a custom-engineered **Feature Performance Index (fPI)** alongside advanced tree-based classifiers like **XGBoost**, this project demonstrates how combination features and structured tabular classification can detect early-stage dysphonia with high precision and interpretability.
+**neuroinsight-ai** is an applied machine learning research project exploring the non-invasive prediction of Parkinson's Disease using vocal acoustic biomarkers. By utilizing a custom-engineered **Feature Performance Index (fPI)** alongside advanced tree-based ensemble models (like **Random Forest** and **XGBoost**), this project demonstrates how combination features and structured tabular classification can detect early-stage dysphonia with high precision and interpretability.
 
 ---
 
@@ -33,7 +33,7 @@ Acoustic voice analysis offers a non-invasive, objective, and low-cost biomarker
 The predictive modeling pipeline is structured into a modular engineering workflow, starting with dataset acquisition and moving sequentially through pre-processing, index engineering, classifier optimization, and performance benchmarking.
 
 <div align="center">
-  <img src="assets/architecture.png" alt="NeuroInsight-AI Workflow Architecture" width="80%" />
+  <img src="assets/architecture.jpg" alt="NeuroInsight-AI Workflow Architecture" width="80%" />
 </div>
 
 ### Workflow Description:
@@ -87,7 +87,9 @@ neuroinsight-ai/
 │
 ├── assets/                 # Image assets for documentation
 │   ├── architecture.png    # Workflow pipeline diagram
-│   └── decision_tree.png   # Decision tree visualization
+│   ├── decision_tree.png   # Decision tree visualization
+│   ├── model_metrics.png   # Classifier performance metrics comparison plot
+│   └── roc_pr_curves.png   # ROC and Precision-Recall evaluation curves
 │
 └── testing/
     └── experimental/       # Legacy files and sandbox tests
@@ -129,17 +131,27 @@ By combining scaling exponents, chaotic dynamics, and pitch variation into a sin
 
 ## 8. MODEL DEVELOPMENT & EVALUATION
 
-Multiple machine learning classifiers were evaluated to compare baseline performance against the final gradient boosted trees model.
+Multiple machine learning classifiers were evaluated using 5-Fold Stratified Cross-Validation to compare baseline performance against advanced tree-based ensembles. 
+
+### 5-Fold Cross-Validation Metrics Summary
+
+| Model | Accuracy | Precision | Recall | F1-score |
+| :--- | :---: | :---: | :---: | :---: |
+| **Random Forest** | **0.903** | **0.914** | **0.966** | **0.938** |
+| **KNN** | **0.897** | **0.927** | **0.939** | **0.932** |
+| **XGBoost** | **0.892** | **0.911** | **0.952** | **0.930** |
+| **SVM** | **0.882** | **0.871** | **0.993** | **0.928** |
+| **Decision Tree** | **0.841** | **0.890** | **0.905** | **0.895** |
 
 ### Performance Visualization & Evaluation Plots
 
-To empirically validate and compare these classification results, performance metrics and prediction estimators are visualized below:
+To empirically validate and compare these classification results, performance metrics and prediction estimators are visualized below. Tree-based ensembles (Random Forest and XGBoost) demonstrated the highest overall robustness across both accuracy and recall.
 
 <div align="center">
-  <img src="https://github.com/bhanmrinal/Predictive-Analysis-for-Parkinsons-Disease-using-ML/assets/97622240/037b3989-51b8-46d7-b163-6ea5af7ed9cd" alt="Metric Scores for ML Models" width="70%" />
+  <img src="assets/model_metrics.png" alt="Metric Scores for ML Models" width="80%" />
   <p><em>Figure 3: Metric comparisons across different ML architectures.</em></p>
 
-  <img src="https://github.com/bhanmrinal/Predictive-Analysis-for-Parkinsons-Disease-using-ML/assets/97622240/a114921b-c139-4809-a5e8-d2b7b9815b56" alt="ROC and Precision-Recall Curves" width="70%" />
+  <img src="assets/roc_pr_curves.jpg" alt="ROC and Precision-Recall Curves" width="85%" />
   <p><em>Figure 4: True Positive vs. False Positive estimations (ROC and PR Curves).</em></p>
 </div>
 
