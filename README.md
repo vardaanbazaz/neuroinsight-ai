@@ -1,12 +1,12 @@
 # neuroinsight-ai
 
-### Explainable Parkinson's Disease Prediction Using Vocal Acoustics and XGBoost
+### Parkinson's Disease Classification Using Vocal Acoustics and XGBoost
 
-[![Project Status: Active](https://img.shields.io/badge/project%20status-active-brightgreen.svg)](#)
+[![Project Status: Completed](https://img.shields.io/badge/project%20status-completed-brightgreen.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](#)
-[![XGBoost](https://img.shields.io/badge/xgboost-1.5.0-orange.svg)](#)
-[![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.0.0-green.svg)](#)
+[![Python 3.14](https://img.shields.io/badge/python-3.14-blue.svg)](#)
+[![XGBoost](https://img.shields.io/badge/xgboost-3.4.1-orange.svg)](#)
+[![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.9.0-green.svg)](#)
 [![Machine Learning](https://img.shields.io/badge/machine%20learning-applied%20research-blueviolet.svg)](#)
 
 ---
@@ -15,13 +15,15 @@
 
 This project's feature-engineering work was inspired by **"fPI: A Novel Index for Predictive Analysis of Parkinson's Disease Using Acoustic Sound Feature"**, a paper by **Gautam Gupta, Mrinal Bhan, and Sahil Nimsarkar** at the **Data Science & AI department, International Institute of Information Technology, Naya Raipur (IIIT Naya Raipur)**, which proposed a composite acoustic index they called the **Frequency Parkinson's Indicator (fPI)**, `fPI = log10(D2 × DFA) × spread2`.
 
-**This project does not reuse their formula.** Starting from the same idea — that a single log-product of complementary acoustic perturbation measures could compress useful signal into one feature — this project independently derived and validated a different index of its own, the **Vocal Instability Compound (VIC)**, built from a different set of ingredients with its own physiological rationale. See [Methodology — Vocal Instability Compound (VIC)](#6-methodology--vocal-instability-compound-vic) below, and [`INDEX_PROPOSAL.md`](INDEX_PROPOSAL.md) for the full derivation.
+Started from an earlier fPI analyser ([bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features](https://github.com/bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features)) and rebuilt with the VIC index and subject-grouped cross-validation; external validation was attempted but is inconclusive (see §7).
+
+**This project does not reuse their formula.** Starting from the same idea — that a single log-product of complementary acoustic perturbation measures could compress useful signal into one feature — this project independently derived and validated a different index of its own, the **Vocal Instability Compound (VIC)**, built from a different set of ingredients with its own physiological rationale. See [Methodology — Vocal Instability Compound (VIC)](#6-methodology--vocal-instability-compound-vic) below, and [`INDEX_PROPOSAL.md`](docs/INDEX_PROPOSAL.md) for the full derivation.
 
 ---
 
 ## 1. HERO SECTION
 
-**neuroinsight-ai** is an applied machine learning research project exploring the non-invasive prediction of Parkinson's Disease using vocal acoustic biomarkers. Using tree-based ensemble models (**Random Forest**, **XGBoost**, and others) trained on biomedical voice measurements, alongside an independently engineered candidate feature (**VIC**, see below), this project demonstrates how structured tabular classification can detect early-stage dysphonia with high precision and interpretability.
+**neuroinsight-ai** is an applied machine learning research project exploring the non-invasive prediction of Parkinson's Disease using vocal acoustic biomarkers. It compares tree-based ensemble models (**Random Forest**, **XGBoost**) and other classifiers on biomedical voice measurements, and tests an independently engineered candidate feature (**VIC**, see below), all under subject-grouped cross-validation against a majority-class baseline (§8).
 
 ---
 
@@ -46,10 +48,10 @@ The predictive modeling pipeline is structured into a modular engineering workfl
 
 ### Workflow Description:
 1.  **Acoustic Sound Features Dataset**: Raw vocal acoustic measurements collected from subjects containing fundamental frequency, perturbation measures, and complexity indices.
-2.  **Data Preprocessing**: Feature normalization and scaling, with stratified k-fold cross-validation used for the reproducible evaluation pipeline (see §8).
+2.  **Data Preprocessing**: Feature normalization and scaling, with subject-grouped stratified k-fold cross-validation (all of a subject's recordings kept on the same side of each split) used for the reproducible evaluation pipeline (see §8).
 3.  **Candidate Feature Engineering (VIC)**: An independently derived composite index, `VIC = log10(Jitter% × Shimmer:APQ3 × spread2 × 1000)`, validated offline on this dataset (§6) and **live in the trained pipeline** — see [Implementation Status](#implementation-status) below.
 4.  **Model Training**: Fitting Decision Tree, Random Forest, SVM, KNN, and XGBoost classifiers.
-5.  **Model Evaluation**: Evaluating performance using accuracy, precision, recall, and F1-score under 5-fold stratified cross-validation.
+5.  **Model Evaluation**: Evaluating performance using accuracy, precision, recall, and F1-score under 5-fold subject-grouped stratified cross-validation.
 6.  **Parkinson Prediction**: Outputting classification probability and binary predictions.
 
 ---
@@ -79,7 +81,7 @@ $$\text{VIC} = \log_{10}(\text{Jitter\%} \times \text{Shimmer:APQ3} \times \text
 
 Frequency micro-instability (`Jitter%`) × amplitude micro-instability (`Shimmer:APQ3`) × frequency spread (`spread2`) — a log-product, since vocal-fold perturbation compounds cycle over cycle (multiplicative degradation), the same mathematical justification the original fPI paper used, applied to a different, independently-motivated trio.
 
-**Headline result (Oxford dataset only):** under subject-grouped cross-validation, VIC as a single feature reaches **0.833 ROC-AUC**, vs. **0.734** for the full raw 22-feature set — see [§7](#7-external-validation--limitations) for what has, and hasn't, been checked outside this dataset. Full derivation, validation tables, and comparison against two alternative candidate indices are in [`INDEX_PROPOSAL.md`](INDEX_PROPOSAL.md).
+**Headline result (Oxford dataset only):** under subject-grouped cross-validation, VIC as a single feature reaches **0.833 ROC-AUC**, vs. **0.734** for the full raw 22-feature set, which overfits at this sample size (about 26 training subjects per fold), so this is not a claim that one feature beats twenty-two — see [§7](#7-external-validation--limitations) for what has, and hasn't, been checked outside this dataset. Full derivation, validation tables, and comparison against two alternative candidate indices are in [`INDEX_PROPOSAL.md`](docs/INDEX_PROPOSAL.md).
 
 ### Implementation Status
 
@@ -89,7 +91,7 @@ Frequency micro-instability (`Jitter%`) × amplitude micro-instability (`Shimmer
 
 ## 7. EXTERNAL VALIDATION & LIMITATIONS
 
-VIC's full formula needs `spread2`, its third ingredient — and `spread2` is not available in either independent dataset tested (the Naranjo et al. "Replicated Acoustic Features" cohort, or the Tsanas/Little telemonitoring cohort, even though the latter comes from the **same original Oxford research group**), so VIC's complete 3-ingredient formula has never actually been computed or tested outside the Oxford dataset it was derived on. The two ingredients that *could* be tested (Jitter%, Shimmer:APQ3) were evaluated alone on both external datasets and **underperformed their Oxford numbers on both**: correlation dropped from r=0.489 to r=0.286 and subject-level AUC from 0.833 to 0.646 on the Naranjo cohort, and showed no statistically significant relationship with UPDRS severity on the telemonitoring cohort (best r≈0.23, p>0.14). This is a known, open limitation, not a resolved question — full details in [`VIC_EXTERNAL_VALIDATION.md`](VIC_EXTERNAL_VALIDATION.md) and [`VIC_TELEMONITORING_VALIDATION.md`](VIC_TELEMONITORING_VALIDATION.md).
+VIC's full formula needs `spread2`, its third ingredient — and `spread2` is not available in either independent dataset tested (the Naranjo et al. "Replicated Acoustic Features" cohort, or the Tsanas/Little telemonitoring cohort, even though the latter comes from the **same original Oxford research group**), so VIC's complete 3-ingredient formula has never actually been computed or tested outside the Oxford dataset it was derived on. The two ingredients that could be tested (Jitter%, Shimmer:APQ3) were modestly weaker on the Naranjo cohort (subject-level correlation with PD status r=0.25 and 0.30, vs row-level 0.28 and 0.35 on Oxford) and showed no statistically significant relationship with UPDRS severity on the telemonitoring cohort (best r≈0.23, p>0.14), which is a different task (severity within an all-PD group). Because spread2 is missing, none of these comparisons is like-for-like with VIC itself, so they neither confirm nor refute it. This is a known, open limitation, not a resolved question — full details in [`VIC_EXTERNAL_VALIDATION.md`](docs/VIC_EXTERNAL_VALIDATION.md) and [`VIC_TELEMONITORING_VALIDATION.md`](docs/VIC_TELEMONITORING_VALIDATION.md).
 
 ---
 
@@ -108,7 +110,7 @@ Multiple machine learning classifiers were evaluated under 5-fold **subject-grou
 | Decision Tree | 0.730 ± 0.095 | 0.818 ± 0.088 | 0.839 ± 0.106 | 0.823 ± 0.067 | 0.637 ± 0.052 |
 | KNN | 0.754 ± 0.081 | 0.810 ± 0.080 | 0.891 ± 0.086 | 0.844 ± 0.055 | 0.715 ± 0.046 |
 
-± is std over the 50 folds, except AUC (std over 10 per-seed AUC values, pooled out-of-fold probabilities). XGBoost is the only model clearing the majority baseline on accuracy, precision, *and* F1 by a real margin; Random Forest has the best raw AUC (0.764) but is threshold-miscalibrated (F1 below baseline); SVM's near-chance AUC (0.636) means its high F1 isn't backed by learned separation. See [§10](#10-research-insights) for per-model detail.
+± is std over the 50 folds, except AUC (std over 10 per-seed AUC values, pooled out-of-fold probabilities). XGBoost is the best-performing of the five on accuracy, precision, *and* F1 and edges the majority baseline on each, but every margin is comparable to or smaller than the fold-to-fold std and no paired fold-level test was run; Random Forest has the best raw AUC (0.764) but is threshold-miscalibrated (F1 below baseline); SVM's near-chance AUC (0.636) means its high F1 isn't backed by learned separation. See [§10](#10-research-insights) for per-model detail.
 
 This table, along with the two images below, is produced reproducibly by [`generate_clean_assets.py`](generate_clean_assets.py) — run it directly to regenerate these numbers and figures.
 
@@ -138,12 +140,12 @@ The project codebase is partitioned into three distinct notebooks representing t
 
 ## 10. RESEARCH INSIGHTS
 
-*   **XGBoost is the standout of the five classifiers.** F1 (0.872) and precision (0.833) clear baseline with real ranking ability behind them — AUC 0.741, second-highest of the five. It's the model worth building on.
+*   **XGBoost is the best-performing of the five classifiers.** F1 (0.872) and precision (0.833) edge the baseline, with margins inside the fold-to-fold spread (no paired fold-level test run), and some ranking ability behind them — AUC 0.741, second-highest of the five. It's the model worth building on.
 *   **Random Forest has the best raw discriminative ranking (AUC 0.764) but its default threshold is miscalibrated** — F1 (0.852) lands below the 0.860 baseline despite the separability being there. Threshold tuning (e.g. `CalibratedClassifierCV`) is the natural next step.
 *   **SVM shows limited genuine signal once subject-level leakage is removed.** AUC 0.636 — near-chance, lowest of the five. Its high recall/F1 reflects majority-class collapse in 22% of folds, not learned discrimination.
 *   **Decision Tree and KNN sit at or below the majority baseline on F1** (0.823 and 0.844 vs. 0.860) and don't earn a place over XGBoost on these numbers.
-*   **Feature importance (leak-free permutation/drop-column testing):** the `spread1`/`PPE` cluster and `D2` hold up as genuine signal; `Shimmer` and `RPDE` do not, despite looking important under gain-based ranking alone. Full ranked tables and methodology in [`FEATURE_IMPORTANCE_VALIDATION.md`](FEATURE_IMPORTANCE_VALIDATION.md).
-*   **Composite-Feature Value (Oxford dataset only)**: VIC matches or beats the full 22-feature raw set under subject-grouped cross-validation on the dataset it was derived on (§6) — but its full formula is untested on independent data, and its two testable ingredients underperformed their Oxford numbers on both external datasets (§7). Read as a promising, unresolved research direction, not a proven generalizable biomarker.
+*   **Feature importance (leak-free permutation/drop-column testing):** the `spread1`/`PPE` cluster and `D2` hold up as genuine signal; `Shimmer` and `RPDE` do not, despite looking important under gain-based ranking alone. Full ranked tables and methodology in [`FEATURE_IMPORTANCE_VALIDATION.md`](docs/FEATURE_IMPORTANCE_VALIDATION.md).
+*   **Composite-Feature Value (Oxford dataset only)**: VIC matches or beats the full 22-feature raw set under subject-grouped cross-validation on the dataset it was derived on (§6) — but its full formula is untested on independent data, and its two testable ingredients were modestly weaker on one external cohort and showed no significant severity relationship on the other (§7). Read as a promising, unresolved research direction, not a proven generalizable biomarker.
 
 ---
 
@@ -151,6 +153,6 @@ The project codebase is partitioned into three distinct notebooks representing t
 
 *   **VIC Notebook Integration**: Wiring VIC into the three notebooks (§9), which currently reflect the pre-VIC feature set even though `generate_clean_assets.py` (§6, Implementation Status) already computes it.
 *   **Resolving the External Validation Gap**: `spread2` is unavailable in every external dataset checked so far (§7); finding or re-deriving a comparable nonlinear frequency-spread measure on independent data is the clearest path to actually testing VIC's full formula outside Oxford.
-*   **Deeper Feature Engineering**: Formulating and testing alternative perturbation indices beyond VIC, CCC, and NRR (see [`INDEX_PROPOSAL.md`](INDEX_PROPOSAL.md)).
+*   **Deeper Feature Engineering**: Formulating and testing alternative perturbation indices beyond VIC, CCC, and NRR (see [`INDEX_PROPOSAL.md`](docs/INDEX_PROPOSAL.md)).
 *   **Model Explainability Expansion**: Implementing SHAP (SHapley Additive exPlanations) or LIME to mathematically map the contribution of each vocal feature in individual predictions.
 *   **Longitudinal Studies**: Exploring vocal changes over time using clinical datasets to assess prediction stability across different stages of degeneration.

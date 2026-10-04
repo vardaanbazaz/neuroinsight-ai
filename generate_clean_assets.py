@@ -77,9 +77,9 @@ models_config = {
 
 # 5-Fold Subject-Grouped Stratified Cross-Validation, averaged over 10 seeds
 # (0-9). With only ~6 subjects per fold a single split can flip model
-# rankings (see INDEX_PROPOSAL.md's own earlier-draft correction note), so
+# rankings (see docs/INDEX_PROPOSAL.md's own earlier-draft correction note), so
 # every reported number here is mean +/- std over 50 folds (5 folds x 10
-# seeds), same scheme INDEX_PROPOSAL.md used for VIC's own validation.
+# seeds), same scheme docs/INDEX_PROPOSAL.md used for VIC's own validation.
 SEEDS = range(10)
 STD_DDOF = 0  # population std throughout: np.std default, and pandas .std(ddof=0) below
 
@@ -177,7 +177,7 @@ for name, config in models_config.items():
 
 # Majority-class baseline (predict PD for everyone), computed over the same
 # 50 folds so it is exactly comparable to the model rows above — this is the
-# bar INDEX_PROPOSAL.md sets (analytic full-dataset figures: acc 0.754 /
+# bar docs/INDEX_PROPOSAL.md sets (analytic full-dataset figures: acc 0.754 /
 # F1 0.860; the fold-averaged numbers below will differ slightly by
 # fold composition, that's expected).
 base_accs, base_precs, base_recs, base_f1s = [], [], [], []
@@ -207,7 +207,7 @@ res_df = pd.DataFrame(metrics_summary)
 print(f"=== 5-Fold Subject-Grouped Stratified CV, averaged over {len(SEEDS)} seeds "
       f"(0-{len(SEEDS)-1}), 50 folds total per model ===")
 print("(+/- is per-fold std over all 50 folds, per the task spec; seed-level std — how much "
-      "the 10 seed-means themselves vary, INDEX_PROPOSAL.md's convention — printed alongside "
+      "the 10 seed-means themselves vary, docs/INDEX_PROPOSAL.md's convention — printed alongside "
       "since it's much tighter and the two are easy to conflate.)")
 full_table = pd.concat([pd.DataFrame([baseline_row]), res_df], ignore_index=True)
 display_df = pd.DataFrame({
@@ -234,7 +234,7 @@ for name in models_config.keys():
 # ROC/PR curves below use OOF probabilities averaged per-sample across the
 # 10 seeds (variance-reduction / light bagging), not a single-seed OOF
 # curve, so the legend AUC runs a bit above the mean of the 10 per-seed
-# AUCs and isn't directly comparable to INDEX_PROPOSAL.md's single-model
+# AUCs and isn't directly comparable to docs/INDEX_PROPOSAL.md's single-model
 # AUCs. Printing both for the record — this is also the primary evidence
 # for the SVM finding below, more informative than precision/recall alone.
 print("\n=== ROC-AUC: 10-seed-averaged-probs (curve/legend value) vs mean of per-seed AUCs ===")
