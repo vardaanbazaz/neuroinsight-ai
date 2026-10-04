@@ -1,6 +1,6 @@
 # Feature Importance Validation
 
-Validates two claims in README_DRAFT.md's §13 Research Insights against this project's own leak-free methodology (StratifiedGroupKFold, subject IDs from `name`, 5 folds × 10 seeds [0–9], raw 22 acoustic features + VIC). Both claims pre-date this repo's subject-grouped CV standard and had never been tested under it.
+Validates two claims in the README's Research Insights section (§10) against this project's own leak-free methodology (StratifiedGroupKFold, subject IDs from `name`, 5 folds × 10 seeds [0–9], raw 22 acoustic features + VIC). Both claims pre-date this repo's subject-grouped CV standard and had never been tested under it.
 
 > **Claim A (Predictive Signal Strength):** "Perturbation measures like `PPE` and amplitude variations (`Shimmer`) exhibit high predictive signal strength."
 > **Claim B (Complexity Metrics):** "Signal complexity (`D2`) and Recurrence Period Density Entropy (`RPDE`) prove important in differentiating healthy voice profiles."
@@ -23,7 +23,7 @@ Net: the original two-bullet framing (PPE+Shimmer paired, D2+RPDE paired) doesn'
 - Same CV as `generate_clean_assets.py`: `StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=seed)` for `seed` in 0–9, groups = subject ID extracted from `name` (`(S\d+)`), 50 folds total.
 - Model: `xgb.XGBClassifier(eval_metric='logloss', random_state=42)`, fit fresh per fold (no scaling, matching XGBoost's row in the main pipeline).
 - Feature set: all 22 raw Oxford acoustic features + `VIC` (`log10(Jitter% × Shimmer:APQ3 × spread2 × 1000)`), 23 columns total.
-- **Permutation importance, AUC-based (not accuracy).** `permutation_importance`'s default accuracy scoring was tried first and abandoned: validation folds hold ~39 samples, so the smallest possible accuracy change is 1/39 ≈ 0.026 — a quantization floor that swallowed most of the ranking below the top 4–5 features (this is the same "lead with AUC, not recall" issue §13 already raises for SVM). All permutation numbers below are mean AUC-drop across 50 folds × 10 repeats per fold (500 permutations per feature), each measured against that fold's own fitted model.
+- **Permutation importance, AUC-based (not accuracy).** `permutation_importance`'s default accuracy scoring was tried first and abandoned: validation folds hold ~39 samples, so the smallest possible accuracy change is 1/39 ≈ 0.026 — a quantization floor that swallowed most of the ranking below the top 4–5 features (this is the same "lead with AUC, not recall" issue §10 already raises for SVM). All permutation numbers below are mean AUC-drop across 50 folds × 10 repeats per fold (500 permutations per feature), each measured against that fold's own fitted model.
 - **Gain-based importance**: XGBoost's built-in `get_score(importance_type='gain')` per fold model, averaged first within each seed's 5 folds, then across the 10 seeds. "Folds used" reports how many of the 50 fold-models actually split on that feature at least once (gain is only meaningful when it does).
 - **Two collinearity problems required extra handling, not just single-column permutation:**
   1. **Exact duplicates.** `Shimmer:DDA ≡ 3 × Shimmer:APQ3` (r = 0.99999996) and `Jitter:DDP ≡ 3 × MDVP:RAP` (r = 0.99999960). XGBoost picks one twin and discards the other (`Shimmer:DDA` used in only 4/50 folds, `Jitter:DDP` in 7/50) — those two columns' near-zero individual importance is guaranteed by construction, not a measurement of "shimmer" or "jitter" in general.
@@ -121,7 +121,7 @@ Per-fold and per-seed variance is real and worth stating plainly, same spirit as
 
 So this isn't a case of "the ranking is too noisy to say anything" — the top tier (`spread2`, `D2`, `PPE`) and the null tier (`RPDE`, all Shimmer variants) are cleanly separated by seed-stability, not just by the point estimate. The genuinely unstable part of this dataset's feature importance is the *middle of the pack* (ranks ~10–20), which is exactly where the small-sample accuracy-scoring problem lives — not a place either README claim was making a bet on.
 
-## Recommendation for the two README_DRAFT.md bullets
+## Recommendation for the two Research Insights bullets
 
 Replace both existing bullets with one bullet per verified finding, so the wording matches what actually held up rather than what the pre-existing text assumed:
 
