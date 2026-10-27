@@ -1,0 +1,1 @@
+Early exploratory notebooks adapted from bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features. Superseded: they use row-level splits, so any scores they produce are inflated. The current pipeline is `generate_clean_assets.py`.
