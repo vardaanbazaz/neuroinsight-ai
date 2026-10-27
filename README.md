@@ -11,7 +11,7 @@
 
 ---
 
-## 1. HERO SECTION
+## 1. Overview
 
 **neuroinsight-ai** is an applied machine learning research project exploring the non-invasive prediction of Parkinson's Disease using vocal acoustic biomarkers. It compares tree-based ensemble models (**Random Forest**, **XGBoost**) and other classifiers on biomedical voice measurements, and tests an independently engineered candidate feature (**VIC**, see below), all under subject-grouped cross-validation against a majority-class baseline (§8).
 
@@ -32,23 +32,43 @@ Acoustic voice analysis offers a non-invasive, objective, and low-cost biomarker
 
 The predictive modeling pipeline is structured into a modular engineering workflow, starting with dataset acquisition and moving sequentially through pre-processing, classifier training, and performance benchmarking.
 
-<div align="center">
-  <img src="assets/architecture.jpg" alt="NeuroInsight-AI Workflow Architecture" width="80%" />
-</div>
+```mermaid
+flowchart TD
+    A["Oxford dataset<br/>data/pd_data.txt (195 recordings)"] --> B["load_data(): compute VIC<br/>log10(Jitter% × Shimmer:APQ3 × spread2 × 1000)"]
+    B --> X["X: 23 features<br/>(22 raw acoustic + VIC)"]
+    B --> G["groups: subject ID from name<br/>(not a feature)"]
+    X --> CV["5-fold StratifiedGroupKFold by subject<br/>× 10 seeds (50 folds)"]
+    G --> CV
+    CV --> T["XGBoost, Random Forest, Decision Tree<br/>(unscaled)"]
+    CV --> S["Per-fold StandardScaler<br/>fit on train fold only"]
+    S --> K["SVM, KNN"]
+    CV --> BL["Majority-class baseline<br/>(predict all-PD)"]
+    T --> M["Per fold: accuracy, precision, recall, F1<br/>Per seed: ROC-AUC from out-of-fold probabilities"]
+    K --> M
+    BL --> MB["Baseline accuracy, precision, recall, F1<br/>(same 50 folds)"]
+    T --> O["Out-of-fold probabilities<br/>averaged over 10 seeds"]
+    K --> O
+    M --> R["Printed metrics report"]
+    MB --> R
+    M --> P1["assets/model_metrics.png"]
+    MB --> P1
+    O --> P2["assets/roc_pr_curves.jpg"]
+```
 
 ### Workflow Description:
-1.  **Acoustic Sound Features Dataset**: Raw vocal acoustic measurements collected from subjects containing fundamental frequency, perturbation measures, and complexity indices.
-2.  **Data Preprocessing**: Feature normalization and scaling, with subject-grouped stratified k-fold cross-validation (all of a subject's recordings kept on the same side of each split) used for the reproducible evaluation pipeline (see §8).
-3.  **Candidate Feature Engineering (VIC)**: An independently derived composite index, `VIC = log10(Jitter% × Shimmer:APQ3 × spread2 × 1000)`, validated offline on this dataset (§6) and **live in the trained pipeline** — see [Implementation Status](#implementation-status) below.
-4.  **Model Training**: Fitting Decision Tree, Random Forest, SVM, KNN, and XGBoost classifiers.
-5.  **Model Evaluation**: Evaluating performance using accuracy, precision, recall, and F1-score under 5-fold subject-grouped stratified cross-validation.
-6.  **Parkinson Prediction**: Outputting classification probability and binary predictions.
+1.  **Dataset**: `data/pd_data.txt` — 195 voice recordings with 22 raw acoustic features (fundamental frequency, perturbation measures, noise ratios, nonlinear dynamics).
+2.  **VIC computation**: `load_data()` computes the composite index `VIC = log10(Jitter% × Shimmer:APQ3 × spread2 × 1000)` and appends it, giving 23 model features. VIC was validated offline on this dataset (§6) and is **live in the trained pipeline** — see [Implementation Status](#implementation-status) below. The subject ID is extracted from `name` for grouping only; it is not a feature.
+3.  **Cross-validation**: 5-fold `StratifiedGroupKFold` grouped by subject (all of a subject's recordings kept on the same side of each split), repeated over 10 seeds — 50 folds per model (see §8).
+4.  **Per-fold scaling**: For SVM and KNN only, a `StandardScaler` is fit on the training fold and applied to the validation fold. XGBoost, Random Forest, and Decision Tree use unscaled features.
+5.  **Model training**: XGBoost, Random Forest, SVM, Decision Tree, and KNN are fit on each training fold; a majority-class baseline (always predict PD) is scored on the same 50 folds.
+6.  **Model evaluation**: Accuracy, precision, recall, and F1 per fold; ROC-AUC per seed from that seed's out-of-fold probabilities.
+7.  **Outputs**: A printed metrics report, `assets/model_metrics.png` (fold-averaged metrics with baseline reference lines), and `assets/roc_pr_curves.jpg` (ROC and precision-recall curves from out-of-fold probabilities averaged over the 10 seeds).
 
 ---
 
 ## 4. DATASET DESCRIPTION
 
-The analysis utilizes the UCI "Oxford Parkinson's Disease Detection Dataset" (Little et al.) — **195 voice recordings from 32 subjects** (147 recordings labeled Parkinson's, 48 labeled healthy control). The features represent different dimensions of signal perturbation, noise ratios, and nonlinear dynamics:
+The analysis utilizes the UCI "Oxford Parkinson's Disease Detection Dataset" (Little et al.) — **195 voice recordings from 32 subject IDs (UCI documentation states 31 people)** (147 recordings labeled Parkinson's, 48 labeled healthy control). The features represent different dimensions of signal perturbation, noise ratios, and nonlinear dynamics:
 
 *   **Vocal Fundamental Frequency**: Average (`MDVP:Fo(Hz)`), maximum (`MDVP:Fhi(Hz)`), and minimum (`MDVP:Flo(Hz)`) pitch.
 *   **Vocal Frequency/Amplitude Perturbation**: Jitter (`MDVP:Jitter(%)`, `MDVP:RAP`, `MDVP:PPQ`) and Shimmer (`MDVP:Shimmer`, `Shimmer:APQ3`, `Shimmer:APQ5`, `MDVP:APQ`) measures, representing variations in cycle-to-cycle frequency and amplitude.
@@ -61,7 +81,7 @@ The analysis utilizes the UCI "Oxford Parkinson's Disease Detection Dataset" (Li
 
 ## 5. PREPROCESSING
 
-Features are scaled to normalize variance across different acoustic units. During exploratory data analysis, high correlation was identified between frequency variation and amplitude/complexity measures, motivating the composite-index work described next.
+For SVM and KNN, features are standardized with a `StandardScaler` fit on each training fold only; the tree models (XGBoost, Random Forest, Decision Tree) use raw features. During exploratory data analysis, high correlation was identified between frequency variation and amplitude/complexity measures, motivating the composite-index work described next.
 
 ## 6. METHODOLOGY — Vocal Instability Compound (VIC)
 
@@ -71,11 +91,11 @@ $$\text{VIC} = \log_{10}(\text{Jitter\%} \times \text{Shimmer:APQ3} \times \text
 
 Frequency micro-instability (`Jitter%`) × amplitude micro-instability (`Shimmer:APQ3`) × frequency spread (`spread2`) — a log-product, since vocal-fold perturbation compounds cycle over cycle (multiplicative degradation), the same mathematical justification the original fPI paper used, applied to a different, independently-motivated trio.
 
-**Headline result (Oxford dataset only):** under subject-grouped cross-validation, VIC as a single feature reaches **0.833 ROC-AUC**, vs. **0.734** for the full raw 22-feature set, which overfits at this sample size (about 26 training subjects per fold), so this is not a claim that one feature beats twenty-two — see [§7](#7-external-validation--limitations) for what has, and hasn't, been checked outside this dataset. Full derivation, validation tables, and comparison against two alternative candidate indices are in [`INDEX_PROPOSAL.md`](docs/INDEX_PROPOSAL.md).
+**Headline result (Oxford dataset only):** in a standalone logistic-regression experiment (`StandardScaler → LogisticRegression`, subject-grouped 5-fold CV over 10 seeds; separate from the five-model pipeline in §8), a logistic regression on VIC alone reaches **0.833 ROC-AUC**, vs. **0.734** for a logistic regression on the full raw 22-feature set, which overfits at this sample size (about 26 training subjects per fold), so this is not a claim that one feature beats twenty-two — see [§7](#7-external-validation--limitations) for what has, and hasn't, been checked outside this dataset. Full derivation, validation tables, and comparison against two alternative candidate indices are in [`INDEX_PROPOSAL.md`](docs/INDEX_PROPOSAL.md).
 
 ### Implementation Status
 
-**VIC is live in the trained pipeline.** `generate_clean_assets.py` computes VIC (in `load_data()`) and includes it, uncontested, in the 23-column feature matrix `X` fed to all five trained models (only `name` and `status` are dropped). The 5-fold CV metrics table in §8 below and Figures 3 and 4 are produced by this VIC-augmented pipeline — they are not a VIC-free baseline. The analysis notebook (§9) imports these same functions, so it shows VIC and reproduces the same metrics.
+**VIC is live in the trained pipeline.** `generate_clean_assets.py` computes VIC (in `load_data()`) and includes it, uncontested, in the 23-column feature matrix `X` fed to all five trained models (only `name` and `status` are dropped). The 5-fold CV metrics table in §8 below and Figures 1 and 2 are produced by this VIC-augmented pipeline — they are not a VIC-free baseline. The analysis notebook (§9) imports these same functions, so it shows VIC and reproduces the same metrics.
 
 ---
 
@@ -108,19 +128,17 @@ This table, along with the two images below, is produced reproducibly by [`gener
 
 <div align="center">
   <img src="assets/model_metrics.png" alt="Metric Scores for ML Models, with majority-baseline reference line" width="80%" />
-  <p><em>Figure 3: Metric comparisons across ML architectures. Dashed line = majority-class baseline for each metric.</em></p>
+  <p><em>Figure 1: Metric comparisons across ML architectures. Dashed line = majority-class baseline for each metric.</em></p>
 
   <img src="assets/roc_pr_curves.jpg" alt="ROC and Precision-Recall Curves" width="85%" />
-  <p><em>Figure 4: ROC and Precision-Recall curves, from probabilities pooled across all 10 seeds. The Decision Tree AUC shown here (0.723) is inflated relative to its true per-seed average (0.637); treat the table's 0.637 as representative.</em></p>
+  <p><em>Figure 2: ROC and Precision-Recall curves, from probabilities pooled across all 10 seeds. The Decision Tree AUC shown here (0.723) is inflated relative to its true per-seed average (0.637); treat the table's 0.637 as representative.</em></p>
 </div>
-
-The decision tree structural layout is visualized under `assets/decision_tree.png`; split nodes are labeled by feature index rather than feature name, so individual splits can't be tied back to specific acoustic features from the image alone.
 
 ---
 
 ## 9. NOTEBOOK
 
-[`notebooks/analysis.ipynb`](notebooks/analysis.ipynb) walks through the pipeline step by step: dataset summary (195 recordings, 32 subjects, class balance), the VIC formula, 5-fold subject-grouped CV over 10 seeds, the §8 metrics table including the majority baseline, and both figures. It imports its functions from [`generate_clean_assets.py`](generate_clean_assets.py) rather than re-implementing them, and checks its table against §8.
+[`notebooks/analysis.ipynb`](notebooks/analysis.ipynb) walks through the pipeline step by step: dataset summary (195 recordings, 32 subject IDs, class balance), the VIC formula, 5-fold subject-grouped CV over 10 seeds, the §8 metrics table including the majority baseline, and both figures. It imports its functions from [`generate_clean_assets.py`](generate_clean_assets.py) rather than re-implementing them, and checks its table against §8.
 
 ---
 
@@ -131,7 +149,7 @@ The decision tree structural layout is visualized under `assets/decision_tree.pn
 *   **SVM shows limited genuine signal once subject-level leakage is removed.** AUC 0.636 — near-chance, lowest of the five. Its high recall/F1 reflects majority-class collapse in 22% of folds, not learned discrimination.
 *   **Decision Tree and KNN sit at or below the majority baseline on F1** (0.823 and 0.844 vs. 0.860) and don't earn a place over XGBoost on these numbers.
 *   **Feature importance (leak-free permutation/drop-column testing):** the `spread1`/`PPE` cluster and `D2` hold up as genuine signal; `Shimmer` and `RPDE` do not, despite looking important under gain-based ranking alone. Full ranked tables and methodology in [`FEATURE_IMPORTANCE_VALIDATION.md`](docs/FEATURE_IMPORTANCE_VALIDATION.md).
-*   **Composite-Feature Value (Oxford dataset only)**: VIC matches or beats the full 22-feature raw set under subject-grouped cross-validation on the dataset it was derived on (§6) — but its full formula is untested on independent data, and its two testable ingredients were modestly weaker on one external cohort and showed no significant severity relationship on the other (§7). Read as a promising, unresolved research direction, not a proven generalizable biomarker.
+*   **Composite-Feature Value (Oxford dataset only)**: in the standalone logistic-regression comparison in §6 (not the five-model pipeline), a logistic regression on VIC alone beats one on the full 22-feature raw set under subject-grouped cross-validation on the dataset it was derived on (0.833 vs. 0.734 ROC-AUC) — but VIC's full formula is untested on independent data, and its two testable ingredients were modestly weaker on one external cohort and showed no significant severity relationship on the other (§7). Read as a promising, unresolved research direction, not a proven generalizable biomarker.
 
 ---
 
