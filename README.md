@@ -11,16 +11,6 @@
 
 ---
 
-## Acknowledgments & Origin
-
-This project's feature-engineering work was inspired by **"fPI: A Novel Index for Predictive Analysis of Parkinson's Disease Using Acoustic Sound Feature"**, a paper by **Gautam Gupta, Mrinal Bhan, and Sahil Nimsarkar** at the **Data Science & AI department, International Institute of Information Technology, Naya Raipur (IIIT Naya Raipur)**, which proposed a composite acoustic index they called the **Frequency Parkinson's Indicator (fPI)**, `fPI = log10(D2 × DFA) × spread2`.
-
-Started from an earlier fPI analyser ([bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features](https://github.com/bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features)) and rebuilt with the VIC index and subject-grouped cross-validation; external validation was attempted but is inconclusive (see §7).
-
-**This project does not reuse their formula.** Starting from the same idea — that a single log-product of complementary acoustic perturbation measures could compress useful signal into one feature — this project independently derived and validated a different index of its own, the **Vocal Instability Compound (VIC)**, built from a different set of ingredients with its own physiological rationale. See [Methodology — Vocal Instability Compound (VIC)](#6-methodology--vocal-instability-compound-vic) below, and [`INDEX_PROPOSAL.md`](docs/INDEX_PROPOSAL.md) for the full derivation.
-
----
-
 ## 1. HERO SECTION
 
 **neuroinsight-ai** is an applied machine learning research project exploring the non-invasive prediction of Parkinson's Disease using vocal acoustic biomarkers. It compares tree-based ensemble models (**Random Forest**, **XGBoost**) and other classifiers on biomedical voice measurements, and tests an independently engineered candidate feature (**VIC**, see below), all under subject-grouped cross-validation against a majority-class baseline (§8).
@@ -75,7 +65,7 @@ Features are scaled to normalize variance across different acoustic units. Durin
 
 ## 6. METHODOLOGY — Vocal Instability Compound (VIC)
 
-Inspired by the original fPI concept (see Acknowledgments), but built from a different, independently chosen trio of features and validated from scratch on this dataset:
+Inspired by the original fPI concept (see [Acknowledgments](#acknowledgments)), but built from a different, independently chosen trio of features and validated from scratch on this dataset:
 
 $$\text{VIC} = \log_{10}(\text{Jitter\%} \times \text{Shimmer:APQ3} \times \text{spread2} \times 1000)$$
 
@@ -85,7 +75,7 @@ Frequency micro-instability (`Jitter%`) × amplitude micro-instability (`Shimmer
 
 ### Implementation Status
 
-**VIC is live in the trained pipeline.** `generate_clean_assets.py` computes VIC (lines ~38–39) and includes it, uncontested, in the 23-column feature matrix `X` fed to all five trained models (only `name` and `status` are dropped). The 5-fold CV metrics table in §8 below and Figures 3 and 4 are produced by this VIC-augmented pipeline — they are not a VIC-free baseline. VIC is not yet wired into any of the three notebooks (§9); it currently only runs inside `generate_clean_assets.py`.
+**VIC is live in the trained pipeline.** `generate_clean_assets.py` computes VIC (in `load_data()`) and includes it, uncontested, in the 23-column feature matrix `X` fed to all five trained models (only `name` and `status` are dropped). The 5-fold CV metrics table in §8 below and Figures 3 and 4 are produced by this VIC-augmented pipeline — they are not a VIC-free baseline. The analysis notebook (§9) imports these same functions, so it shows VIC and reproduces the same metrics.
 
 ---
 
@@ -128,13 +118,9 @@ The decision tree structural layout is visualized under `assets/decision_tree.pn
 
 ---
 
-## 9. NOTEBOOK SHOWCASE
+## 9. NOTEBOOK
 
-The project codebase is partitioned into three distinct notebooks representing the research lifecycle:
-
-1.  **[eda.ipynb](notebooks/eda.ipynb)**: Performs initial dataset loading, distribution checks, missing value validation, F-test and correlation analyses, and single-split SVM/RF/DT baselines. It does not currently compute VIC — VIC is live in `generate_clean_assets.py` (§6) but not yet wired into any notebook (see [Implementation Status](#implementation-status)).
-2.  **[pd_models.ipynb](notebooks/pd_models.ipynb)**: Implements training pipelines for baseline classifiers (K-Nearest Neighbors, Decision Trees, Random Forest, and SVM) and conducts GridSearchCV hyperparameter optimization.
-3.  **[xgboost_classifier.ipynb](notebooks/xgboost_classifier.ipynb)**: Configures and evaluates the final XGBoost classification pipeline, generating accuracy scores and comparing results against baseline performance.
+[`notebooks/analysis.ipynb`](notebooks/analysis.ipynb) walks through the pipeline step by step: dataset summary (195 recordings, 32 subjects, class balance), the VIC formula, 5-fold subject-grouped CV over 10 seeds, the §8 metrics table including the majority baseline, and both figures. It imports its functions from [`generate_clean_assets.py`](generate_clean_assets.py) rather than re-implementing them, and checks its table against §8.
 
 ---
 
@@ -151,8 +137,12 @@ The project codebase is partitioned into three distinct notebooks representing t
 
 ## 11. FUTURE IMPROVEMENTS
 
-*   **VIC Notebook Integration**: Wiring VIC into the three notebooks (§9), which currently reflect the pre-VIC feature set even though `generate_clean_assets.py` (§6, Implementation Status) already computes it.
 *   **Resolving the External Validation Gap**: `spread2` is unavailable in every external dataset checked so far (§7); finding or re-deriving a comparable nonlinear frequency-spread measure on independent data is the clearest path to actually testing VIC's full formula outside Oxford.
 *   **Deeper Feature Engineering**: Formulating and testing alternative perturbation indices beyond VIC, CCC, and NRR (see [`INDEX_PROPOSAL.md`](docs/INDEX_PROPOSAL.md)).
 *   **Model Explainability Expansion**: Implementing SHAP (SHapley Additive exPlanations) or LIME to mathematically map the contribution of each vocal feature in individual predictions.
 *   **Longitudinal Studies**: Exploring vocal changes over time using clinical datasets to assess prediction stability across different stages of degeneration.
+
+---
+
+## Acknowledgments
+VIC was inspired by the fPI index from *"fPI: A Novel Index for Predictive Analysis of Parkinson's Disease Using Acoustic Sound Feature"* (Gupta, Bhan & Nimsarkar, IIIT Naya Raipur). This project started from [bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features](https://github.com/bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features); earlier notebooks are in `legacy/`.
