@@ -82,7 +82,6 @@ python scripts/reproduce_vic.py   # reproduces the VIC 0.833 / 0.734 comparison
 generate_clean_assets.py   full pipeline: data → VIC → grouped CV → metrics + figures
 notebooks/analysis.ipynb   step-by-step walkthrough (imports the script)
 scripts/reproduce_vic.py   reproduces the VIC vs raw-22 comparison (0.833 / 0.734)
-legacy/                    earlier row-level-split notebooks, kept for reference only
 data/                      Oxford dataset + two external cohorts used for validation
 docs/                      VIC derivation, external validation, feature-importance checks
 assets/                    figures used in this README
@@ -96,7 +95,6 @@ Two external datasets in `data/` are used only for the validation write-ups in `
 - `ReplicatedAcousticFeatures-ParkinsonDatabase.csv`: UCI dataset 489, Naranjo et al. ([`docs/VIC_EXTERNAL_VALIDATION.md`](docs/VIC_EXTERNAL_VALIDATION.md)).
 - `parkinsons_updrs.data`: UCI Parkinson's Telemonitoring dataset, Tsanas, Little, McSharry and Ramig, University of Oxford ([`docs/VIC_TELEMONITORING_VALIDATION.md`](docs/VIC_TELEMONITORING_VALIDATION.md)).
 
-`docs/problem_statement.pdf` is the UCI dataset description, not project-authored.
 
 ## Limitations
 
@@ -108,4 +106,4 @@ More in [`docs/`](docs/).
 
 ## Acknowledgments
 
-VIC was inspired by the fPI index from *"fPI: A Novel Index for Predictive Analysis of Parkinson's Disease Using Acoustic Sound Feature"* (Gupta, Bhan & Nimsarkar, IIIT Naya Raipur). VIC is independently derived and does not reuse the fPI formula. This project started from [bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features](https://github.com/bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features); `legacy/` holds the earlier notebooks, copied from that repo with minor edits (data paths, deprecated pandas calls, unused imports), kept only to show the row-level protocol that inflates scores.
+VIC was inspired by the fPI index from *"fPI: A Novel Index for Predictive Analysis of Parkinson's Disease Using Acoustic Sound Feature"* (Gupta, Bhan & Nimsarkar, IIIT Naya Raipur). VIC is independently derived and does not reuse the fPI formula. The idea of classifying the Oxford voice recordings by disease status was inspired by [bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features](https://github.com/bhanmrinal/fPI-Parkison-Analyser-using-Acoustic-Sound-Features). No code from that repository is included here.
