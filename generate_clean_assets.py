@@ -390,6 +390,10 @@ def plot_roc_pr(y, oof_probabilities):
     plt.setp(leg1.get_texts(), color='#0F172A')
 
     # PR Panel styling
+    # Prevalence baseline: precision of a no-skill classifier equals the PD share (147/195).
+    prevalence = y.mean()
+    ax2.axhline(prevalence, linestyle='--', lw=1.2, color='#94A3B8',
+                label=f'Prevalence baseline (PD share = {prevalence:.3f})')
     ax2.set_xlim([-0.02, 1.02])
     ax2.set_ylim([-0.02, 1.05])
     ax2.set_xlabel('Recall (Sensitivity)', fontsize=11, fontweight='bold', color='#0F172A')

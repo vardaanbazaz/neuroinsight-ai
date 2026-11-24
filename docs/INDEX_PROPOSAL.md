@@ -4,7 +4,7 @@ Exploratory analysis only. No formula implemented in the pipeline. No other repo
 
 ## Methodology summary (read before trusting numbers)
 
-- Dataset: `data/pd_data.txt`, 195 recordings, **32 unique subjects** (extracted from the `name` column, e.g. `phon_R01_S01_1` → subject `S01`), 147 PD / 48 healthy. **Majority-class baseline: accuracy = 0.754, F1 (predict-all-PD) = 0.860.** Any candidate must clear both meaningfully to mean anything — a number that lands *on* these values is the model predicting PD for everything, not finding signal.
+- Dataset: `data/pd_data.txt`, 195 recordings, **32 subject IDs in the file (the UCI documentation states 31 people)** (extracted from the `name` column, e.g. `phon_R01_S01_1` → subject `S01`), 147 PD / 48 healthy. **Majority-class baseline: accuracy = 0.754 (share of PD recordings across all 195 rows, 147/195; the fold-averaged majority baseline used elsewhere is 0.756), F1 (predict-all-PD) = 0.860.** Any candidate must clear both meaningfully to mean anything — a number that lands *on* these values is the model predicting PD for everything, not finding signal.
 - Two CV schemes, because plain row-level k-fold leaks: sibling recordings of the same subject can land in both train and test.
   - Row-level: `RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=42)` — the split the task asked for, mean±std over 50 folds.
   - Subject-grouped (the number that actually generalizes): `StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=seed)`, averaged over 10 seeds (0–9), mean±std over those 10 runs. This is reported as the deciding evidence below, not a footnote — see the correction note under Candidate 2.
