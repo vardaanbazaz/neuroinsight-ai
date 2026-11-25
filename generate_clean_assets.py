@@ -34,7 +34,7 @@ MUTED_TEXT = '#6B6A64'  # secondary text
 GRID = '#D5D2C9'        # soft ash: grid, spines, legend frame
 REFERENCE = '#7A786F'   # majority-baseline / chance / prevalence lines
 SERIES = {
-    'XGBoost': '#3A3935',        # headline model
+    'XGBoost': '#3A3935',
     'Random Forest': '#A4573B',
     'SVM': '#546131',
     'Decision Tree': '#265252',
@@ -54,7 +54,6 @@ HATCHES = {
     'Decision Tree': 'xxx',
     'KNN': '\\\\\\',
 }
-HEADLINE_LW = 2.8
 SERIES_LW = 1.8
 REFERENCE_LW = 1.3
 
@@ -439,25 +438,32 @@ def plot_roc_pr(y, oof_probabilities):
     # -------------------------------------------------------------
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), dpi=300)
 
+    # No model is emphasised: all share SERIES_LW and one zorder. Both legends
+    # list models by pooled ROC-AUC, highest first.
+    roc = {}
     for name in models_config.keys():
+        fpr, tpr, _ = roc_curve(y, oof_probabilities[name])
+        roc[name] = (fpr, tpr, auc(fpr, tpr))
+    order = sorted(roc, key=lambda n: roc[n][2], reverse=True)
+
+    for name in order:
         probs = oof_probabilities[name]
         color = SERIES[name]
+        ls = LINESTYLES[name]
 
         # ROC Curve
-        fpr, tpr, _ = roc_curve(y, probs)
-        roc_auc_val = auc(fpr, tpr)
-        lw = HEADLINE_LW if name == 'XGBoost' else SERIES_LW
-        ls = LINESTYLES[name]
-        z = 4 if name == 'XGBoost' else 3
-        ax1.plot(fpr, tpr, color=color, lw=lw, ls=ls, zorder=z, label=f'{name} (AUC = {roc_auc_val:.3f})')
+        fpr, tpr, roc_auc_val = roc[name]
+        ax1.plot(fpr, tpr, color=color, lw=SERIES_LW, ls=ls, zorder=3, label=f'{name} (AUC = {roc_auc_val:.3f})')
 
         # Precision-Recall Curve
         prec_c, rec_c, _ = precision_recall_curve(y, probs)
         pr_auc_val = average_precision_score(y, probs)
-        ax2.plot(rec_c, prec_c, color=color, lw=lw, ls=ls, zorder=z, label=f'{name} (AP = {pr_auc_val:.3f})')
+        ax2.plot(rec_c, prec_c, color=color, lw=SERIES_LW, ls=ls, zorder=3, label=f'{name} (AP = {pr_auc_val:.3f})')
 
+    # Reference lines draw above the model curves so overlapping curves can't hide them.
     # ROC Panel styling
-    ax1.plot([0, 1], [0, 1], linestyle='--', lw=REFERENCE_LW, color=REFERENCE, label='Random Chance (AUC = 0.500)')
+    ax1.plot([0, 1], [0, 1], linestyle='--', lw=REFERENCE_LW, color=REFERENCE, zorder=4,
+             label='Random Chance (AUC = 0.500)')
     ax1.set_xlim([-0.02, 1.02])
     ax1.set_ylim([-0.02, 1.05])
     ax1.set_xlabel('False Positive Rate (1 - Specificity)', fontsize=11, fontweight='bold')
@@ -470,7 +476,7 @@ def plot_roc_pr(y, oof_probabilities):
     # PR Panel styling
     # Prevalence baseline: precision of a no-skill classifier equals the PD share (147/195).
     prevalence = y.mean()
-    ax2.axhline(prevalence, linestyle='--', lw=REFERENCE_LW, color=REFERENCE,
+    ax2.axhline(prevalence, linestyle='--', lw=REFERENCE_LW, color=REFERENCE, zorder=4,
                 label=f'Prevalence baseline (PD share = {prevalence:.3f})')
     ax2.set_xlim([-0.02, 1.02])
     ax2.set_ylim([-0.02, 1.05])
