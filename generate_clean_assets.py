@@ -18,11 +18,76 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 
-# Configure clean, modern light style suitable for README and LinkedIn media
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'Helvetica']
-plt.rcParams['axes.edgecolor'] = '#CBD5E1'
-plt.rcParams['axes.linewidth'] = 1.2
+# -------------------------------------------------------------
+# PALETTE: matte earth / wabi-sabi, matches the portfolio site.
+# Every colour used in the figures comes from this block.
+# Contrast vs BG (WCAG): TEXT 12.6:1, MUTED_TEXT 4.75:1, REFERENCE 3.88:1,
+# series 3.52-10.1:1. GRID is intentionally soft (decorative only).
+# Series hexes are the re-stepped values shared with employee-attrition-analysis.
+# CIE L*: XGBoost 23.9, Decision Tree 31.9, SVM 39.0, Random Forest 45.7,
+# KNN 53.1, so neighbours sit about 7 L* apart. That is still a small step
+# in greyscale, so per-model line styles (ROC/PR) and bar hatches stay.
+# -------------------------------------------------------------
+BG = '#F1F0EB'          # linen: figure + axes background
+TEXT = '#2B2A27'        # charcoal: titles, labels, ticks, values
+MUTED_TEXT = '#6B6A64'  # secondary text
+GRID = '#D5D2C9'        # soft ash: grid, spines, legend frame
+REFERENCE = '#7A786F'   # majority-baseline / chance / prevalence lines
+SERIES = {
+    'XGBoost': '#3A3935',        # headline model
+    'Random Forest': '#A4573B',
+    'SVM': '#546131',
+    'Decision Tree': '#265252',
+    'KNN': '#9C7A26',
+}
+LINESTYLES = {
+    'XGBoost': '-',
+    'Random Forest': (0, (6, 2)),
+    'SVM': (0, (1, 1.5)),
+    'Decision Tree': (0, (6, 2, 1, 2)),
+    'KNN': (0, (3, 1.5, 1, 1.5, 1, 1.5)),
+}
+HATCHES = {
+    'XGBoost': None,
+    'Random Forest': '///',
+    'SVM': '...',
+    'Decision Tree': 'xxx',
+    'KNN': '\\\\\\',
+}
+HEADLINE_LW = 2.8
+SERIES_LW = 1.8
+REFERENCE_LW = 1.3
+
+
+def apply_theme():
+    plt.rcParams.update({
+        'font.family': 'sans-serif',
+        'font.sans-serif': ['DejaVu Sans', 'Arial', 'Helvetica'],
+        'figure.facecolor': BG,
+        'savefig.facecolor': BG,
+        'axes.facecolor': BG,
+        'axes.edgecolor': GRID,
+        'axes.linewidth': 1.2,
+        'axes.labelcolor': TEXT,
+        'axes.titlecolor': TEXT,
+        'text.color': TEXT,
+        'xtick.color': GRID,
+        'ytick.color': GRID,
+        'xtick.labelcolor': TEXT,
+        'ytick.labelcolor': TEXT,
+        'grid.color': GRID,
+        'grid.linestyle': '--',
+        'grid.linewidth': 0.6,
+        'grid.alpha': 1.0,
+        'legend.facecolor': BG,
+        'legend.edgecolor': GRID,
+        'legend.labelcolor': TEXT,
+        'legend.framealpha': 1.0,
+        'hatch.linewidth': 0.8,
+    })
+
+
+apply_theme()
 
 # Set random seed
 np.random.seed(42)
@@ -34,28 +99,23 @@ STD_DDOF = 0  # population std throughout: np.std default, and pandas .std(ddof=
 models_config = {
     'XGBoost': {
         'model_fn': lambda: xgb.XGBClassifier(eval_metric='logloss', random_state=42),
-        'scale': False,
-        'color': '#2563EB'  # Vibrant Royal Blue
+        'scale': False
     },
     'Random Forest': {
         'model_fn': lambda: RandomForestClassifier(random_state=42),
-        'scale': False,
-        'color': '#7C3AED'  # Purple
+        'scale': False
     },
     'SVM': {
         'model_fn': lambda: SVC(probability=True, random_state=42),
-        'scale': True,
-        'color': '#059669'  # Emerald Green
+        'scale': True
     },
     'Decision Tree': {
         'model_fn': lambda: DecisionTreeClassifier(max_depth=5, random_state=42),
-        'scale': False,
-        'color': '#D97706'  # Amber / Warm Gold
+        'scale': False
     },
     'KNN': {
         'model_fn': lambda: KNeighborsClassifier(),
-        'scale': True,
-        'color': '#DC2626'  # Crimson Red
+        'scale': True
     }
 }
 
@@ -298,31 +358,28 @@ def plot_model_metrics(res_df, baseline_row):
     # 2. SAVE ASSET 1: PERFORMANCE MULTI-BAR CHART (assets/model_metrics.png)
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(11, 6), dpi=300)
-    fig.patch.set_facecolor('#FFFFFF')
-    ax.set_facecolor('#F8FAFC')
 
     metrics_names = ['Accuracy', 'Precision', 'Recall', 'F1-score']
     x = np.arange(len(metrics_names))
     width = 0.15
+    value_labels = []  # (metric index, bar centre x, bar height, error bar half-length)
 
     for i, row in res_df.iterrows():
         model_name = row['Model']
         vals = [row['Accuracy'], row['Precision'], row['Recall'], row['F1-score']]
         errs = [row['Accuracy_std'], row['Precision_std'], row['Recall_std'], row['F1-score_std']]
-        color = models_config[model_name]['color']
+        color = SERIES[model_name]
         offset = (i - len(res_df)/2 + 0.5) * width
         rects = ax.bar(x + offset, vals, width, yerr=errs, capsize=3,
-                        error_kw={'ecolor': '#334155', 'elinewidth': 1, 'capthick': 1},
-                        label=model_name, color=color, alpha=0.9, edgecolor='#FFFFFF', linewidth=1)
+                        error_kw={'ecolor': TEXT, 'elinewidth': 1, 'capthick': 1},
+                        label=model_name, color=color, edgecolor=BG, linewidth=1,
+                        hatch=HATCHES[model_name])
 
-        # Label bar values
-        for rect, err in zip(rects, errs):
-            h = rect.get_height()
-            ax.annotate(f'{h:.2f}',
-                        xy=(rect.get_x() + rect.get_width() / 2, h + err),
-                        xytext=(0, 3),
-                        textcoords="offset points",
-                        ha='center', va='bottom', fontsize=8, fontweight='bold', color='#1E293B')
+        # Value labels are drawn after layout (below), once the baseline
+        # positions are known, so they can be kept clear of those lines.
+        for metric_idx, (rect, err) in enumerate(zip(rects, errs)):
+            value_labels.append((metric_idx, rect.get_x() + rect.get_width() / 2,
+                                 rect.get_height(), err))
 
     ## Majority-baseline reference line, per metric (computed above, same 50
     ## folds as the model bars — not hardcoded). Drawn as short dashed segments
@@ -333,23 +390,46 @@ def plot_model_metrics(res_df, baseline_row):
     group_half_width = (len(res_df) * width) / 2
     for i, (xc, bv) in enumerate(zip(x, baseline_vals)):
         ax.plot([xc - group_half_width, xc + group_half_width], [bv, bv],
-                linestyle='--', color='#64748B', linewidth=1.6, zorder=5,
+                linestyle='--', color=REFERENCE, linewidth=1.6, zorder=5,
                 label='Majority-class baseline (predict all-PD)' if i == 0 else None)
 
-    ax.set_ylabel('Score (10-Seed Averaged Subject-Grouped CV, Mean +/- Std)', fontsize=11, fontweight='bold', color='#0F172A', labelpad=10)
+    ax.set_ylabel('Score (10-Seed Averaged Subject-Grouped CV, Mean +/- Std)', fontsize=11, fontweight='bold', labelpad=10)
     ax.set_title('Classifier Performance Metrics Comparison (5-Fold Subject-Grouped CV, 10-Seed Avg)',
-                 fontsize=14, fontweight='bold', color='#0F172A', pad=15)
+                 fontsize=14, fontweight='bold', pad=15)
     ax.set_xticks(x)
-    ax.set_xticklabels(metrics_names, fontsize=12, fontweight='bold', color='#1E293B')
-    ax.set_ylim(0.5, 1.18)  # headroom for error bars + value labels (SVM recall ~0.94+0.09)
-    ax.grid(axis='y', linestyle='--', alpha=0.5, color='#CBD5E1')
+    ax.set_xticklabels(metrics_names, fontsize=12, fontweight='bold')
+    ax.set_ylim(0, 1.05)  # bars start at zero so heights compare honestly
+    ax.grid(axis='y')
+    ax.set_axisbelow(True)
 
-    # Legend
-    legend = ax.legend(frameon=True, facecolor='#FFFFFF', edgecolor='#E2E8F0', fontsize=10, loc='upper left')
+    # No top spine: the Recall labels (SVM 0.94 + 0.09) sit just above the
+    # 1.05 limit, and a frame line there would cut through them.
+    ax.spines['top'].set_visible(False)
+
+    # Legend sits below the axes so it can never cover bars, error bars or labels.
+    legend = ax.legend(frameon=True, fontsize=10, loc='upper center',
+                       bbox_to_anchor=(0.5, -0.08), ncol=3)
     legend.get_frame().set_boxstyle('round,pad=0.5')
-    plt.setp(legend.get_texts(), color='#0F172A')
 
     plt.tight_layout()
+
+    # Each label normally sits 3 pt above its error bar cap. If the label's
+    # text box would touch its group's baseline line, it is lifted to sit
+    # 4 pt above that line instead (Recall: baseline at 1.000).
+    fig.canvas.draw()
+    pts_per_data = (ax.transData.transform((0, 1))[1] - ax.transData.transform((0, 0))[1]) * 72 / fig.dpi
+    label_fontsize = 8
+    label_height = (3 + label_fontsize * 1.2) / pts_per_data  # offset + text box, in data units
+    line_clearance = 2 / pts_per_data
+    for metric_idx, xc, h, err in value_labels:
+        y_anchor, y_offset = h + err, 3
+        bv = baseline_vals[metric_idx]
+        if y_anchor - line_clearance <= bv <= y_anchor + label_height + line_clearance:
+            y_anchor, y_offset = bv, 4
+        ax.annotate(f'{h:.2f}', xy=(xc, y_anchor), xytext=(0, y_offset),
+                    textcoords="offset points", annotation_clip=False,
+                    ha='center', va='bottom', fontsize=label_fontsize,
+                    fontweight='bold', color=TEXT, zorder=6)
     return fig
 
 
@@ -358,54 +438,53 @@ def plot_roc_pr(y, oof_probabilities):
     # 3. SAVE ASSET 2: ROC & PRECISION-RECALL 2-PANEL CURVES (assets/roc_pr_curves.jpg)
     # -------------------------------------------------------------
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), dpi=300)
-    fig.patch.set_facecolor('#FFFFFF')
-    ax1.set_facecolor('#F8FAFC')
-    ax2.set_facecolor('#F8FAFC')
 
     for name in models_config.keys():
         probs = oof_probabilities[name]
-        color = models_config[name]['color']
+        color = SERIES[name]
 
         # ROC Curve
         fpr, tpr, _ = roc_curve(y, probs)
         roc_auc_val = auc(fpr, tpr)
-        lw = 2.5 if name == 'XGBoost' else 1.8
-        ax1.plot(fpr, tpr, color=color, lw=lw, label=f'{name} (AUC = {roc_auc_val:.3f})')
+        lw = HEADLINE_LW if name == 'XGBoost' else SERIES_LW
+        ls = LINESTYLES[name]
+        z = 4 if name == 'XGBoost' else 3
+        ax1.plot(fpr, tpr, color=color, lw=lw, ls=ls, zorder=z, label=f'{name} (AUC = {roc_auc_val:.3f})')
 
         # Precision-Recall Curve
         prec_c, rec_c, _ = precision_recall_curve(y, probs)
         pr_auc_val = average_precision_score(y, probs)
-        ax2.plot(rec_c, prec_c, color=color, lw=lw, label=f'{name} (AP = {pr_auc_val:.3f})')
+        ax2.plot(rec_c, prec_c, color=color, lw=lw, ls=ls, zorder=z, label=f'{name} (AP = {pr_auc_val:.3f})')
 
     # ROC Panel styling
-    ax1.plot([0, 1], [0, 1], linestyle='--', lw=1.2, color='#94A3B8', label='Random Chance (AUC = 0.500)')
+    ax1.plot([0, 1], [0, 1], linestyle='--', lw=REFERENCE_LW, color=REFERENCE, label='Random Chance (AUC = 0.500)')
     ax1.set_xlim([-0.02, 1.02])
     ax1.set_ylim([-0.02, 1.05])
-    ax1.set_xlabel('False Positive Rate (1 - Specificity)', fontsize=11, fontweight='bold', color='#0F172A')
-    ax1.set_ylabel('True Positive Rate (Sensitivity)', fontsize=11, fontweight='bold', color='#0F172A')
-    ax1.set_title('Receiver Operating Characteristic (ROC) Curve', fontsize=13, fontweight='bold', color='#0F172A', pad=12)
-    ax1.grid(True, linestyle='--', alpha=0.5, color='#CBD5E1')
-    leg1 = ax1.legend(frameon=True, facecolor='#FFFFFF', edgecolor='#E2E8F0', fontsize=9.5, loc='lower right')
+    ax1.set_xlabel('False Positive Rate (1 - Specificity)', fontsize=11, fontweight='bold')
+    ax1.set_ylabel('True Positive Rate (Sensitivity)', fontsize=11, fontweight='bold')
+    ax1.set_title('Receiver Operating Characteristic (ROC) Curve', fontsize=13, fontweight='bold', pad=12)
+    ax1.grid(True)
+    leg1 = ax1.legend(frameon=True, fontsize=9.5, loc='lower right', handlelength=3.2)
     leg1.get_frame().set_boxstyle('round,pad=0.4')
-    plt.setp(leg1.get_texts(), color='#0F172A')
 
     # PR Panel styling
     # Prevalence baseline: precision of a no-skill classifier equals the PD share (147/195).
     prevalence = y.mean()
-    ax2.axhline(prevalence, linestyle='--', lw=1.2, color='#94A3B8',
+    ax2.axhline(prevalence, linestyle='--', lw=REFERENCE_LW, color=REFERENCE,
                 label=f'Prevalence baseline (PD share = {prevalence:.3f})')
     ax2.set_xlim([-0.02, 1.02])
     ax2.set_ylim([-0.02, 1.05])
-    ax2.set_xlabel('Recall (Sensitivity)', fontsize=11, fontweight='bold', color='#0F172A')
-    ax2.set_ylabel('Precision (Positive Predictive Value)', fontsize=11, fontweight='bold', color='#0F172A')
-    ax2.set_title('Precision-Recall (PR) Curve', fontsize=13, fontweight='bold', color='#0F172A', pad=12)
-    ax2.grid(True, linestyle='--', alpha=0.5, color='#CBD5E1')
-    leg2 = ax2.legend(frameon=True, facecolor='#FFFFFF', edgecolor='#E2E8F0', fontsize=9.5, loc='lower left')
+    ax2.set_xlabel('Recall (Sensitivity)', fontsize=11, fontweight='bold')
+    ax2.set_ylabel('Precision (Positive Predictive Value)', fontsize=11, fontweight='bold')
+    ax2.set_title('Precision-Recall (PR) Curve', fontsize=13, fontweight='bold', pad=12)
+    ax2.grid(True)
+    # Lower right: empty area below the prevalence line. Lower left (old spot)
+    # covered the low-recall rise of the SVM curve.
+    leg2 = ax2.legend(frameon=True, fontsize=9.5, loc='lower right', handlelength=3.2)
     leg2.get_frame().set_boxstyle('round,pad=0.4')
-    plt.setp(leg2.get_texts(), color='#0F172A')
 
     fig.suptitle('Model Evaluation & Discriminative Power (5-Fold Subject-Grouped CV, 10-Seed Avg OOF Probs)',
-                 fontsize=15, fontweight='bold', color='#0F172A', y=0.98)
+                 fontsize=15, fontweight='bold', y=0.98)
 
     plt.tight_layout()
     plt.subplots_adjust(top=0.88)
