@@ -439,7 +439,7 @@ def plot_roc_pr(y, oof_probabilities):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), dpi=300)
 
     # No model is emphasised: all share SERIES_LW and one zorder. Both legends
-    # list models by pooled ROC-AUC, highest first.
+    # list models by seed-averaged ROC-AUC, highest first.
     roc = {}
     for name in models_config.keys():
         fpr, tpr, _ = roc_curve(y, oof_probabilities[name])

@@ -50,7 +50,7 @@ How to read this table:
   <br/>
   <img src="assets/roc_pr_curves.jpg" alt="ROC and precision-recall curves" width="85%" />
   <br/>
-  <em>Both panels pool out-of-fold probabilities across the 10 seeds, so each curve's AUC differs from the per-seed average in the table, for every model (for example Decision Tree: 0.723 pooled vs 0.637 per-seed). The dashed line in the PR panel is the prevalence baseline, 147/195 = 0.754.</em>
+  <em>Each recording's out-of-fold probability is averaged across the 10 seeds before both panels are drawn, so each curve's AUC differs from the per-seed average in the table, for every model (for example Decision Tree: 0.723 on the curve vs 0.637 per-seed). The dashed line in the PR panel is the prevalence baseline, 147/195 = 0.754.</em>
 </p>
 
 ## VIC: Vocal Instability Compound
